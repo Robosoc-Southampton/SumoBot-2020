@@ -7,7 +7,7 @@ def controller_init():
 	pygame.init()
 	pygame.joystick.init()
 
-def controller_loop(fn):
+def controller_loop(fn, state):
 	running = True
 
 	while running:
@@ -28,7 +28,7 @@ def controller_loop(fn):
 					if event.type == pygame.QUIT:
 						running = False
 
-				fn(js)
+				state = fn(js, state)
 
 			js.quit()
 

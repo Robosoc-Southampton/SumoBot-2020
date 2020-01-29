@@ -23,5 +23,4 @@ class BluetoothWriter:
 	def write(self, opcode: int, *params: int):
 		integers = [opcode, *params]
 		data = "".join(chr(c) for c in integers)
-		print(f"Sending data {data} (length {len(data)})")
 		self.__socket.send(data)
