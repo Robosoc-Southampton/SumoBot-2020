@@ -22,5 +22,6 @@ class BluetoothWriter:
 	# opcode and params must be 0-127
 	def write(self, opcode: int, *params: int):
 		integers = [opcode, *params]
+		print(integers)
 		data = "".join(chr(c) for c in integers)
 		self.__socket.send(data)

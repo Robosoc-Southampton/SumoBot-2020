@@ -2,8 +2,8 @@
 from time import clock
 
 FREQUENCY = 20
-DRIVE_OPCODE_FRONT = 25
-DRIVE_OPCODE_BACK = 26
+DRIVE_OPCODE_PRIMARY = 25
+DRIVE_OPCODE_SECONDARY = 26
 TIMEOUT = 1
 FORWARD = ord('F')
 BACKWARD = ord('B')
@@ -30,11 +30,16 @@ def sign(x):
 	return 1 if x >= 0 else -1
 
 def transform_axes(horizontal, vertical):
-	horizontal = sign(horizontal) * (max(abs(horizontal) - 0.2, 0) / 0.8)
-	vertical = sign(vertical) * (max(abs(vertical) - 0.2, 0) / 0.8)
+	l = sqrt(horizontal * horizontal + vertical * vertical)
+
+	if l == 0:
+		return 0, 0
+	elif l < 0.3:
+		horizontal *= 0.3 / l
+		vertical *= 0.3 / l
 
 	speed = -vertical
-	turnSpeed = horizontal / (1 + abs(speed))
+	turnSpeed = 0.75 * horizontal / (1 + abs(speed))
 	speedScale = 1 / (0.01 + abs(speed) + abs(turnSpeed))
 
 	if speedScale > 1: speedScale = 1

@@ -1,5 +1,5 @@
 
-from time import sleep
+from time import sleep, clock
 
 import pygame
 
@@ -18,6 +18,7 @@ def controller_loop(fn, state):
 
 			js = pygame.joystick.Joystick(0)
 			js.init()
+			t0 = clock()
 
 			print(f"Connected to joystick {js.get_name()}")
 			print(f"\tHas {js.get_numaxes()} axes, {js.get_numballs()} balls, " +
@@ -28,7 +29,9 @@ def controller_loop(fn, state):
 					if event.type == pygame.QUIT:
 						running = False
 
-				state = fn(js, state)
+				t = clock()
+				state = fn(js, state, t - t0)
+				t0 = t
 
 			js.quit()
 
