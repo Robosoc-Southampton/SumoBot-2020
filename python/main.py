@@ -12,12 +12,20 @@ writer = BluetoothWriter(sock)
 primaryMotors = SpeedController(DRIVE_OPCODE_PRIMARY, writer)
 secondaryMotors = SpeedController(DRIVE_OPCODE_SECONDARY, writer)
 
+def scaleSpeeds(l, r):
+	return l * 0.7, r * 0.7
+
+def jointControl(l, r):
+	lp, rp = scaleSpeeds(l, r)
+	secondaryMotors.setSpeeds(l, r)
+	primaryMotors.setSpeeds(lp, rp)
+
 def newState():
 	return (False, 0)
 
 def control(js, state, dt):
 	held = [i for i in range(js.get_numbuttons()) if js.get_button(i)]
-	hv = js.get_hat()
+	hv = js.get_hat(0)
 	nonFullButtons = [b for b in held if b != SQUARE and b != CIRCLE and b != X]
 
 	hp = js.get_axis(RSTICK_H)
@@ -28,8 +36,8 @@ def control(js, state, dt):
 	vs = js.get_axis(LSTICK_V)
 	ls, rs = transform_axes(hs, vs)
 
-	lhat = hv < -0.5
-	rhat = hv > +0.5
+	lhat = hv[0] < -0.5
+	rhat = hv[0] > +0.5
 
 	# reset post-release forward state when control taken back
 	if abs(hp) > 0.2 or abs(vp) > 0.2 or len(nonFullButtons) > 0 or lhat or rhat:
@@ -39,12 +47,10 @@ def control(js, state, dt):
 	if not lhat and not rhat:
 		state = (state[0], 0)
 
-	if (LT in held and RT in held) or X in held: # full forward
+	if X in held: # full forward and keep after release
 		primaryMotors.setSpeeds(1, 1)
 		secondaryMotors.setSpeeds(1, 1)
-
-		# keep full forward after release
-		if X in held: state = (True, state[1])
+		state = (True, state[1])
 
 	elif SQUARE in held: # full left
 		primaryMotors.setSpeeds(-0.8, 0.8)
@@ -56,31 +62,29 @@ def control(js, state, dt):
 		secondaryMotors.setSpeeds(1, -1)
 		state = (True, state[1])
 
+	elif LT in held and RT in held: # full forward
+		jointControl(1, 1)
+
 	elif state[0]: # post-release full forward
 		primaryMotors.setSpeeds(1, 1)
 		secondaryMotors.setSpeeds(1, 1)
 
 	elif lhat: # arc back left
-		state = (state[0], min(1, state[1] + dt * 1.1))
-		primaryMotors.setSpeeds(-state[1], -1)
-		secondaryMotors.setSpeeds(0, 0)
+		state = (state[0], min(1, state[1] + dt * 0.5))
+		jointControl(-state[1], -1)
 
 	elif rhat: # arc back right
-		state = (state[0], min(1, state[1] + dt * 1.1))
-		primaryMotors.setSpeeds(-1, -state[1])
-		secondaryMotors.setSpeeds(0, 0)
+		state = (state[0], min(1, state[1] + dt * 0.5))
+		jointControl(-1, -state[1])
 
 	elif LT in held: # partial left
-		primaryMotors.setSpeeds(0.1, 1)
-		secondaryMotors.setSpeeds(1, 1)
+		jointControl(0.3, 1)
 
 	elif RT in held: # partial right
-		primaryMotors.setSpeeds(1, 0.1)
-		secondaryMotors.setSpeeds(1, 1)
+		jointControl(1, 0.3)
 
 	else: # drive normally
-		primaryMotors.setSpeeds(lp, rp)
-		secondaryMotors.setSpeeds(ls, rs)
+		jointControl(lp + ls * 0.2, rp + rs * 0.2)
 
 	return state
 

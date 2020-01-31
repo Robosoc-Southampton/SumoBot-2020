@@ -1,5 +1,6 @@
 
 from time import clock
+from math import sqrt
 
 FREQUENCY = 20
 DRIVE_OPCODE_PRIMARY = 25
@@ -35,8 +36,9 @@ def transform_axes(horizontal, vertical):
 	if l == 0:
 		return 0, 0
 	elif l < 0.3:
-		horizontal *= 0.3 / l
-		vertical *= 0.3 / l
+		# horizontal *= 0.3 / l
+		# vertical *= 0.3 / l
+		pass
 
 	speed = -vertical
 	turnSpeed = 0.75 * horizontal / (1 + abs(speed))
