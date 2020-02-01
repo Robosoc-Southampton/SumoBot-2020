@@ -41,7 +41,7 @@ def transform_axes(horizontal, vertical):
 		pass
 
 	speed = -vertical
-	turnSpeed = 0.75 * horizontal / (1 + abs(speed))
+	turnSpeed = horizontal / (1 + abs(speed))
 	speedScale = 1 / (0.01 + abs(speed) + abs(turnSpeed))
 
 	if speedScale > 1: speedScale = 1

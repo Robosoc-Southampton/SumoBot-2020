@@ -25,7 +25,7 @@ def newState():
 def control(js, state, dt):
 	held = [i for i in range(js.get_numbuttons()) if js.get_button(i)]
 	hv = js.get_hat(0)
-	nonFullButtons = [b for b in held if b != SQUARE and b != CIRCLE and b != X]
+	nonFullButtons = [b for b in held if b != LT and b != RT and b != X and b != LT2 and b != RT2]
 
 	hp = js.get_axis(RSTICK_H)
 	vp = js.get_axis(RSTICK_V)
@@ -53,24 +53,24 @@ def control(js, state, dt):
 		secondaryMotors.setSpeeds(1, 1)
 		state = (True, False)
 
-	elif SQUARE in held: # full left keep
+	elif LT in held: # full left keep
 		primaryMotors.setSpeeds(-0.8, 0.8)
 		secondaryMotors.setSpeeds(-1, 1)
 		state = (True, False)
 
-	elif CIRCLE in held: # full right keep
+	elif RT in held: # full right keep
 		primaryMotors.setSpeeds(0.8, -0.8)
 		secondaryMotors.setSpeeds(1, -1)
 		state = (True, False)
 
-	elif lhat: # back left keep
-		primaryMotors.setSpeeds(0.8, -0.8)
-		secondaryMotors.setSpeeds(1, -1)
+	elif LT2 in held: # back left keep
+		primaryMotors.setSpeeds(-0.8, 0.8)
+		secondaryMotors.setSpeeds(-1, 1)
 		state = (False, True)
 
-	elif rhat: # back right keep
-		primaryMotors.setSpeeds(-0.8, 0.8)
-		secondaryMotors.setSpeeds(-1, 1)
+	elif RT2 in held: # back right keep
+		primaryMotors.setSpeeds(0.8, -0.8)
+		secondaryMotors.setSpeeds(1, -1)
 		state = (False, True)
 
 	elif state[0]: # post-release full forward
@@ -80,13 +80,13 @@ def control(js, state, dt):
 	elif state[1]: # post-release full backward
 		jointControl(-1, -1)
 
-	elif LT in held and RT in held: # partial forward
+	elif SQUARE in held and CIRCLE in held: # partial forward
 		jointControl(1, 1)
 
-	elif LT in held: # partial left
+	elif SQUARE in held: # partial left
 		jointControl(0.3, 1)
 
-	elif RT in held: # partial right
+	elif CIRCLE in held: # partial right
 		jointControl(1, 0.3)
 
 	else: # drive normally
