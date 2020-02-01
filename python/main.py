@@ -12,16 +12,15 @@ writer = BluetoothWriter(sock)
 primaryMotors = SpeedController(DRIVE_OPCODE_PRIMARY, writer)
 secondaryMotors = SpeedController(DRIVE_OPCODE_SECONDARY, writer)
 
-def scaleSpeeds(l, r):
-	return l * 0.7, r * 0.7
+def scaleSpeed(s):
+	return s * 0.5
 
 def jointControl(l, r):
-	lp, rp = scaleSpeeds(l, r)
 	secondaryMotors.setSpeeds(l, r)
-	primaryMotors.setSpeeds(lp, rp)
+	primaryMotors.setSpeeds(scaleSpeed(l), scaleSpeed(r))
 
 def newState():
-	return (False, 0)
+	return (False, False)
 
 def control(js, state, dt):
 	held = [i for i in range(js.get_numbuttons()) if js.get_button(i)]
@@ -30,52 +29,59 @@ def control(js, state, dt):
 
 	hp = js.get_axis(RSTICK_H)
 	vp = js.get_axis(RSTICK_V)
-	lp, rp = transform_axes(hp, vp)
 
 	hs = js.get_axis(LSTICK_H)
 	vs = js.get_axis(LSTICK_V)
-	ls, rs = transform_axes(hs, vs)
+
+	if (abs(hs) > abs(hp)):
+		hp = hs
+
+	if (abs(vs) > abs(vp)):
+		vp = vs
+		
+	lp, rp = transform_axes(hp, vp)
 
 	lhat = hv[0] < -0.5
 	rhat = hv[0] > +0.5
 
 	# reset post-release forward state when control taken back
-	if abs(hp) > 0.2 or abs(vp) > 0.2 or len(nonFullButtons) > 0 or lhat or rhat:
-		state = (False, state[1])
+	if abs(hp) > 0.2 or abs(vp) > 0.2 or len(nonFullButtons) > 0:
+		state = (False, False)
 
-	# reset turn parameter if not turning
-	if not lhat and not rhat:
-		state = (state[0], 0)
-
-	if X in held: # full forward and keep after release
+	if X in held: # full forward keep
 		primaryMotors.setSpeeds(1, 1)
 		secondaryMotors.setSpeeds(1, 1)
-		state = (True, state[1])
+		state = (True, False)
 
-	elif SQUARE in held: # full left
+	elif SQUARE in held: # full left keep
 		primaryMotors.setSpeeds(-0.8, 0.8)
 		secondaryMotors.setSpeeds(-1, 1)
-		state = (True, state[1])
+		state = (True, False)
 
-	elif CIRCLE in held: # full right
+	elif CIRCLE in held: # full right keep
 		primaryMotors.setSpeeds(0.8, -0.8)
 		secondaryMotors.setSpeeds(1, -1)
-		state = (True, state[1])
+		state = (True, False)
 
-	elif LT in held and RT in held: # full forward
-		jointControl(1, 1)
+	elif lhat: # back left keep
+		primaryMotors.setSpeeds(0.8, -0.8)
+		secondaryMotors.setSpeeds(1, -1)
+		state = (False, True)
+
+	elif rhat: # back right keep
+		primaryMotors.setSpeeds(-0.8, 0.8)
+		secondaryMotors.setSpeeds(-1, 1)
+		state = (False, True)
 
 	elif state[0]: # post-release full forward
 		primaryMotors.setSpeeds(1, 1)
 		secondaryMotors.setSpeeds(1, 1)
 
-	elif lhat: # arc back left
-		state = (state[0], min(1, state[1] + dt * 0.5))
-		jointControl(-state[1], -1)
+	elif state[1]: # post-release full backward
+		jointControl(-1, -1)
 
-	elif rhat: # arc back right
-		state = (state[0], min(1, state[1] + dt * 0.5))
-		jointControl(-1, -state[1])
+	elif LT in held and RT in held: # partial forward
+		jointControl(1, 1)
 
 	elif LT in held: # partial left
 		jointControl(0.3, 1)
@@ -84,7 +90,7 @@ def control(js, state, dt):
 		jointControl(1, 0.3)
 
 	else: # drive normally
-		jointControl(lp + ls * 0.2, rp + rs * 0.2)
+		jointControl(lp, rp)
 
 	return state
 

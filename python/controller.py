@@ -13,6 +13,7 @@ def controller_loop(fn, state):
 	while running:
 		try:
 			while pygame.joystick.get_count() == 0:
+				for event in pygame.event.get(): pass
 				print("No joystick connected, waiting...")
 				sleep(1)
 
